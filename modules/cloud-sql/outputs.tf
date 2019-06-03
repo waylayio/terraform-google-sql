@@ -65,15 +65,15 @@ output "master_ca_cert_sha1_fingerprint" {
 # DATABASE OUTPUTS
 # ------------------------------------------------------------------------------
 
-output "db" {
-  description = "Self link to the default database"
-  value       = "${google_sql_database.default.self_link}"
-}
+# output "db" {
+#   description = "Self link to the default database"
+#   value       = "${google_sql_database.default.self_link}"
+# }
 
-output "db_name" {
-  description = "Name of the default database"
-  value       = "${google_sql_database.default.name}"
-}
+# output "db_name" {
+#   description = "Name of the default database"
+#   value       = "${google_sql_database.default.name}"
+# }
 
 # ------------------------------------------------------------------------------
 # FAILOVER REPLICA OUTPUTS - ONLY APPLICABLE TO MYSQL

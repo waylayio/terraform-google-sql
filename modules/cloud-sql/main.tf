@@ -41,11 +41,17 @@ resource "google_sql_database_instance" "master" {
   settings {
     tier                        = "${var.machine_type}"
     activation_policy           = "${var.activation_policy}"
-    authorized_gae_applications = ["${var.authorized_gae_applications}"]
+    authorized_gae_applications = "${var.authorized_gae_applications}"
     disk_autoresize             = "${var.disk_autoresize}"
 
     ip_configuration {
-      authorized_networks = ["${var.authorized_networks}"]
+      dynamic "authorized_networks" {
+        for_each = "${var.authorized_networks}"
+        content {
+          name  = "${authorized_networks.name}"
+          value = "${authorized_networks.value}"
+        }
+  }
       ipv4_enabled        = "${var.enable_public_internet_access}"
       private_network     = "${var.private_network}"
       require_ssl         = "${var.require_ssl}"
@@ -70,7 +76,13 @@ resource "google_sql_database_instance" "master" {
 
     disk_size         = "${var.disk_size}"
     disk_type         = "${var.disk_type}"
-    database_flags    = ["${var.database_flags}"]
+    dynamic "database_flags" {
+      for_each = "${var.database_flags}"
+        content {
+          name  = "${database_flags.name}"
+          value = "${database_flags.value}"
+        }
+    }
     availability_type = "${local.actual_availability_type}"
 
     user_labels = "${var.custom_labels}"
@@ -90,25 +102,26 @@ resource "google_sql_database_instance" "master" {
 # CREATE A DATABASE
 # ------------------------------------------------------------------------------
 
-resource "google_sql_database" "default" {
-  depends_on = ["google_sql_database_instance.master"]
+# resource "google_sql_database" "default" {
+#   depends_on = ["google_sql_database_instance.master"]
 
-  name      = "${var.db_name}"
-  project   = "${var.project}"
-  instance  = "${google_sql_database_instance.master.name}"
-  charset   = "${var.db_charset}"
-  collation = "${var.db_collation}"
-}
+#   name      = "${var.db_name}"
+#   project   = "${var.project}"
+#   instance  = "${google_sql_database_instance.master.name}"
+#   charset   = "${var.db_charset}"
+#   collation = "${var.db_collation}"
+# }
 
-resource "google_sql_user" "default" {
-  depends_on = ["google_sql_database.default"]
+# resource "google_sql_user" "default" {
+#   provider   = "google-beta"
+#   depends_on = ["google_sql_database.default"]
 
-  name     = "${var.master_user_name}"
-  project  = "${var.project}"
-  instance = "${google_sql_database_instance.master.name}"
-  host     = "${var.master_user_host}"
-  password = "${var.master_user_password}"
-}
+#   name     = "${var.master_user_name}"
+#   project  = "${var.project}"
+#   instance = "${google_sql_database_instance.master.name}"
+#   host     = "${var.master_user_host}"
+#   password = "${var.master_user_password}"
+# }
 
 # ------------------------------------------------------------------------------
 # SET MODULE DEPENDENCY RESOURCE
@@ -133,8 +146,8 @@ resource "google_sql_database_instance" "failover_replica" {
 
   depends_on = [
     "google_sql_database_instance.master",
-    "google_sql_database.default",
-    "google_sql_user.default",
+    # "google_sql_database.default",
+    # "google_sql_user.default",
   ]
 
   provider         = "google-beta"
@@ -155,11 +168,17 @@ resource "google_sql_database_instance" "failover_replica" {
     crash_safe_replication = true
 
     tier                        = "${var.machine_type}"
-    authorized_gae_applications = ["${var.authorized_gae_applications}"]
+    authorized_gae_applications = "${var.authorized_gae_applications}"
     disk_autoresize             = "${var.disk_autoresize}"
 
     ip_configuration {
-      authorized_networks = ["${var.authorized_networks}"]
+      dynamic "authorized_networks" {
+        for_each = "${var.authorized_networks}"
+        content {
+          name  = "${authorized_networks.name}"
+          value = "${authorized_networks.value}"
+        }
+      }
       ipv4_enabled        = "${var.enable_public_internet_access}"
       private_network     = "${var.private_network}"
       require_ssl         = "${var.require_ssl}"
@@ -172,8 +191,13 @@ resource "google_sql_database_instance" "failover_replica" {
 
     disk_size      = "${var.disk_size}"
     disk_type      = "${var.disk_type}"
-    database_flags = ["${var.database_flags}"]
-
+    dynamic "database_flags" {
+      for_each = "${var.database_flags}"
+        content {
+          name  = "${database_flags.name}"
+          value = "${database_flags.value}"
+        }
+    }
     user_labels = "${var.custom_labels}"
   }
 
@@ -197,8 +221,8 @@ resource "google_sql_database_instance" "read_replica" {
   depends_on = [
     "google_sql_database_instance.master",
     "google_sql_database_instance.failover_replica",
-    "google_sql_database.default",
-    "google_sql_user.default",
+    # "google_sql_database.default",
+    # "google_sql_user.default",
   ]
 
   provider         = "google-beta"
@@ -217,11 +241,17 @@ resource "google_sql_database_instance" "read_replica" {
 
   settings {
     tier                        = "${var.machine_type}"
-    authorized_gae_applications = ["${var.authorized_gae_applications}"]
+    authorized_gae_applications = "${var.authorized_gae_applications}"
     disk_autoresize             = "${var.disk_autoresize}"
 
     ip_configuration {
-      authorized_networks = ["${var.authorized_networks}"]
+      dynamic "authorized_networks" {
+        for_each = "${var.authorized_networks}"
+        content {
+          name  = "${authorized_networks.name}"
+          value = "${authorized_networks.value}"
+        }
+      }
       ipv4_enabled        = "${var.enable_public_internet_access}"
       private_network     = "${var.private_network}"
       require_ssl         = "${var.require_ssl}"
@@ -234,8 +264,13 @@ resource "google_sql_database_instance" "read_replica" {
 
     disk_size      = "${var.disk_size}"
     disk_type      = "${var.disk_type}"
-    database_flags = ["${var.database_flags}"]
-
+    dynamic "database_flags" {
+      for_each = "${var.database_flags}"
+        content {
+          name  = "${database_flags.name}"
+          value = "${database_flags.value}"
+        }
+    }
     user_labels = "${var.custom_labels}"
   }
 
@@ -258,8 +293,8 @@ data "template_file" "complete" {
     "google_sql_database_instance.master",
     "google_sql_database_instance.failover_replica",
     "google_sql_database_instance.read_replica",
-    "google_sql_database.default",
-    "google_sql_user.default",
+    # "google_sql_database.default",
+    # "google_sql_user.default",
   ]
 
   template = "true"
